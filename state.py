@@ -1,104 +1,88 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
-import re
-import syslog
 import time
-import os
-import errno
-import datetime
 import fcntl
-from rpc3Control import *
+import os
+from rpc3Control import rpc3Control, load_credentials
 
-RPC = None
-#RPCUSER= str(sys.argv[2])
-RPCUSER= None
-RPCPASS = None
-OUTLET = int(sys.argv[1])
-delta_init = 7200000
-delta = 7200001
+# Configuration
+# Use absolute paths to ensure it works regardless of where Homebridge calls it from
+BASE_DIR = '/var/lib/homebridge/rpc3control'
+LOCK_FILE = os.path.join(BASE_DIR, 'telnetrunning.txt')
+CRED_FILE = os.path.join(BASE_DIR, '.credentials')
+CACHE_TTL = 7200  # 2 hours
+try:
+    OUTLET = int(sys.argv[1])
+except (IndexError, ValueError):
+    sys.stderr.write("Usage: state.py <outlet_number>\n")
+    sys.exit(1)
 
-def file_exists(path, filename):
-        for file_or_folder in os.listdir(path):
-                if file_or_folder == filename:
-                        return True
+def get_cached_data():
+    if not os.path.exists(LOCK_FILE):
+        return 0, False, {}
+    try:
+        with open(LOCK_FILE, 'r') as f:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            lines = f.readlines()
+            fcntl.flock(f, fcntl.LOCK_UN)
+            if not lines: return 0, False, {}
+            header = lines[0].split(',')
+            ts = int(header[0]) // 1000
+            needs_update = (header[1].strip() == "updated")
+            status_data = {}
+            for line in lines[1:]:
+                parts = line.split(',')
+                if len(parts) >= 2:
+                    status_data[int(parts[0])] = parts[1].strip()
+            return ts, needs_update, status_data
+    except Exception as e:
+        sys.stderr.write(f"Cache Read Error: {e}\n")
+        return 0, False, {}
+
+def update_cache_via_telnet():
+    try:
+        lock_fd = open(LOCK_FILE, 'a+')
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        lock_fd.close()
         return False
 
-lock_filename = 'telnetrunning.txt'
-fileexists = file_exists("/var/homebridge/rpc3control/", lock_filename)
+    try:
+        (rpc_host, user, pw, whitelist) = load_credentials(CRED_FILE)
+        r = rpc3Control(rpc_host, user, pw)
+        r.outlet_status(1) 
+        return True
+    except Exception as e:
+        sys.stderr.write(f"Telnet Update Error: {e}\n")
+        return False
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        lock_fd.close()
 
-#I'm using this scriot with homebridge plugin that calls this state file script for every outlet on the RPC3 unit. The RPC unit can only allow for admin user 4 telnet sessions at a time.
-#Homekit will call the state script for all 8 outlets and i can't control the order they are called in. And i think  they are called in parallel.
-#To minimize telnet sessions to the RPC unit I want the script call for outlet 1 state from homekit to be the only one allowed to create a status file for ALL  outlets state.
-#In this script for any outlet other than outlet 1, I wait for the status file to be created by the outlet 1 state script execution from homekit if it does not exist.
+# --- MAIN ---
+try:
+    timestamp, needs_update, status_map = get_cached_data()
+    now = time.time()
+    delta = now - timestamp
 
-if OUTLET != 1:
-        #testing giving outlet 1 a headstart
-        time.sleep(0.07)
-        i=0
-        while (not fileexists and i<=50):
-                try:
-                        time.sleep(0.05)
-                        fileexists = file_exists("/var/homebridge/rpc3control/", lock_filename)
-                        i=i+1
-                except:
-                        raise
-
-#if the status file already exists then I pull the state from the status file unless it has recently been updated by the on and off scripts for individual outlets.
-#I do this to confirm that the on off commands actually worked. So if the status file was recently updated by and on off command i telnet in and get outlet status
-#I also recheck outlet states from the RPC3 unit if it's been over 2 hours since the last telnet and status check on the unit.
-if (fileexists):
-        with open(lock_filename,'r') as my_file:
-                while True:
-                        try:
-                                fcntl.flock(my_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                                break
-                        except IOError as e:
-                                # raise on unrelated IOErrors
-                                if e.errno != errno.EAGAIN:
-                                        raise
-                                else:
-                                        time.sleep(0.05)
-                statearray = [line.split(',') for line in my_file]
-                fcntl.flock(my_file, fcntl.LOCK_UN)
-                my_file.close()
-        delta = int(round(time.time() * 1000)) - int(statearray[0][0])
-        status = statearray[OUTLET][1]
-        #if it's been less than 2 hours since the last status check and if the status file does not have the updated flag marked, i skip telneting and just pull status from the status file.
-        if (delta <= delta_init and statearray[0][1]!="updated"):
-                print status
-                sys.exit()
-
-#Only outlet 1 is alloed to telnet and check/confirms updated status. It updates the status file with latest settings if the status file  was recently updated (doublechecking that the update succeeded) .
-#It will also telnet in and upadte status if it's been over 2 hours since the last time the status file was updated
-if ((delta > delta_init or statearray[0][1]=="updated") and OUTLET == 1):
-        (RPC, RPCUSER, RPCPASS, WHITELIST) = load_credentials("/var/homebridge/rpc3control/.credentials")
-        #RPCUSER = str(sys.argv[2])
-        RPCUSER = None
-        r = rpc3Control(RPC, RPCUSER)
-        (status,name) = r.outlet_status(OUTLET)
-        if (status == "True"):
-                print status
-                sys.exit()
+    if not status_map or delta > CACHE_TTL or needs_update:
+        did_update = update_cache_via_telnet()
+        if not did_update:
+            # Wait loop for other process to finish
+            for _ in range(30):
+                time.sleep(0.5)
+                _, needs_update, status_map = get_cached_data()
+                if not needs_update and status_map:
+                    break
         else:
-                print status
-                sys.exit()
-#Outlets other than outlet 1  should get latest update from status file as outlet 1 status file update  may have updated things. see if statement above.
-if ((delta > delta_init or statearray[0][1]=="updated") and OUTLET != 1):
-        with open(lock_filename,'r') as my_file:
-                while True:
-                        try:
-                                fcntl.flock(my_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                                break
-                        except IOError as e:
-                                # raise on unrelated IOErrors
-                                if e.errno != errno.EAGAIN:
-                                        raise
-                                else:
-                                        time.sleep(0.05)
-                statearray = [line.split(',') for line in my_file]
-                fcntl.flock(my_file, fcntl.LOCK_UN)
-                my_file.close()
-        status = statearray[OUTLET][1]
-        print status
-        sys.exit()
+            _, _, status_map = get_cached_data()
+
+    # Get status and print to STDOUT
+    final_status = status_map.get(OUTLET, "False")
+    print(final_status)
+    sys.exit(0) # Explicit Success
+
+except Exception as e:
+    sys.stderr.write(f"Fatal Error in state.py: {e}\n")
+    sys.exit(1) # Explicit Failure
