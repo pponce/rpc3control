@@ -1,13 +1,120 @@
-I use this in combination with homebridge and homebridge script plugins. 
-These are plugins that allow you to execute scripts to turn on/off and check state of different devices via homekit/siri
-I use this one https://github.com/luisiam/homebridge-cmdswitch2.
-I've written the on.py, off.py, and state.py scripts to be able to use the RPC3 outlets with homekit and the home app.
-There were some challenges with number of telnet sessions that the RPC3 unit allows at a time. 
-I've tried to minimize having to telnet into the RPC3 unit by using a status file to keep track of outlet status.
-The .sh versions of the scripts simply call the py versions. I configure the homebridge plugin to execute the sh scripts.
-You should pass the sh scripts the outlet number as the first parameter and the user name as the second parameter.
-Though right now the py versions of the on,off and state scripts all hardcode the username to "None".  
-My RPC 3 unit is set to not ask for username or password.
+I use this in combination with homebridge and homebridge-script2 plugin. 
+https://github.com/pponce/homebridge-script2
+homebridge-script2 is a plugin that allow you to execute scripts to turn on/off and check state of different devices via homekit/siri
+Here is a sample homebridge-script2 configuration:
+    "devices": [
+        {
+            "name": "RPC3 Socket 1",
+            "on": "/var/lib/homebridge/rpc3control/control.py 1 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 1 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 1 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234561"
+        },
+        {
+            "name": "RPC3 Socket 2",
+            "on": "/var/lib/homebridge/rpc3control/control.py 2 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 2 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 2 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234562"
+        },
+        {
+            "name": "RPC3 Socket 3",
+            "on": "/var/lib/homebridge/rpc3control/control.py 3 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 3 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 3 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234563"
+        },
+        {
+            "name": "RPC3 Socket 4",
+            "on": "/var/lib/homebridge/rpc3control/control.py 4 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 4 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 4 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234564"
+        },
+        {
+            "name": "RPC3 Socket 5",
+            "on": "/var/lib/homebridge/rpc3control/control.py 5 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 5 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 5 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234565"
+        },
+        {
+            "name": "RPC3 Socket 6",
+            "on": "/var/lib/homebridge/rpc3control/control.py 6 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 6 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 6 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234566"
+        },
+        {
+            "name": "RPC3 Socket 7",
+            "on": "/var/lib/homebridge/rpc3control/control.py 7 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 7 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 7 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234567"
+        },
+        {
+            "name": "RPC3 Socket 8",
+            "on": "/var/lib/homebridge/rpc3control/control.py 8 admin on",
+            "off": "/var/lib/homebridge/rpc3control/control.py 8 admin off",
+            "state": "/var/lib/homebridge/rpc3control/state.py 8 admin",
+            "on_value": "true",
+            "polling": true,
+            "polling_interval": 3600000,
+            "polling_on_start": true,
+            "state_cache_ttl_ms": 1500,
+            "reset_state_cache_on_set": true,
+            "unique_serial": "1234568"
+        }
+    ],
+
+I've written the control.py, and state.py scripts to be able to use the RPC3 outlets with homekit and the home app.
+There were some challenges with number of telnet sessions that the RPC3 unit allows at a time. It only allows 4 telnet sessions at a time.
+The scripts attempt to mitigage homebridge state requests for status by using a cache status file. 
+The first request for status will update the status file.
+My RPC 3 unit is set to not ask for username or password. 
+When configured like this the scripts should work as is.
 
 More info on the Baytech RPC3 
 http://www.copyerror.com/2014/04/25/baytech-rpc3-remote-power-controller/
