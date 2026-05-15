@@ -1,0 +1,28 @@
+{
+  "name": "homebridge-rpc3control",
+  "version": "0.1.0",
+  "description": "Homebridge plugin for Baytech RPC3 outlets",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "rpc3",
+    "pdu"
+  ],
+  "engines": {
+    "homebridge": ">=2.0.0",
+    "node": ">=20.0.0"
+  },
+  "author": "pponce",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "homebridge": "^2.0.0",
+    "typescript": "^5.7.2"
+  }
+}

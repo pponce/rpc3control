@@ -1,91 +1,83 @@
-This project is used with Homebridge and the homebridge-script2 plugin.
-https://github.com/pponce/homebridge-script2
+# homebridge-rpc3control
 
-homebridge-script2 allows scripts to turn devices on/off and report state to HomeKit/Siri.
+Homebridge plugin and helper scripts for controlling Baytech RPC3 outlets.
 
-## Requirements
+This repository now contains:
+- Existing Python RPC3 scripts (`control.py`, `state.py`, `rpc3Control.py`)
+- A standalone Homebridge 2.0 plugin implementation (`homebridge-rpc3control`)
 
-- Python 3
-- Modern `pexpect` (tested with 4.9.x)
+## What this plugin supports
 
-Install pexpect:
+- Dynamic Homebridge platform named `RPC3Control`
+- Standard Outlet accessories for on/off control
+- Additional stateless Switch accessories that send `reboot` commands
+- Serialized command execution to avoid concurrent telnet operations
+- Per-outlet state caching with configurable TTL
+- Configurable polling interval
 
-- Ubuntu/Debian: `sudo apt install python3-pexpect`
-- Generic/pip: `python3 -m pip install pexpect`
+## Install
 
-Verify which pexpect is used:
+```bash
+npm install -g /var/lib/homebridge/rpc3control
+```
 
-`python3 -c "import pexpect; print(f'Version: {pexpect.__version__}'); print(f'Location: {pexpect.__file__}')"`
+Or publish and install from npm in normal Homebridge plugin fashion.
 
-## `.credentials` file
+## Homebridge config example
 
-The scripts read credentials from:
+```json
+{
+  "platform": "RPC3Control",
+  "name": "RPC3 PDU",
+  "scriptPath": "/var/lib/homebridge/rpc3control",
+  "username": "admin",
+  "pollIntervalMs": 5000,
+  "cacheTtlMs": 1500,
+  "outlets": [
+    { "id": 1, "name": "RPC3 Socket 1", "serial": "1234561" },
+    { "id": 2, "name": "RPC3 Socket 2", "serial": "1234562" },
+    { "id": 3, "name": "RPC3 Socket 3", "serial": "1234563" },
+    { "id": 4, "name": "RPC3 Socket 4", "serial": "1234564" },
+    { "id": 5, "name": "RPC3 Socket 5", "serial": "1234565" },
+    { "id": 6, "name": "RPC3 Socket 6", "serial": "1234566" },
+    { "id": 7, "name": "RPC3 Socket 7", "serial": "1234567" },
+    { "id": 8, "name": "RPC3 Socket 8", "serial": "1234568" }
+  ],
+  "rebootSwitches": [
+    { "id": 3, "name": "RPC3 Socket 3 Reboot", "serial": "1234563-reboot" },
+    { "id": 8, "name": "RPC3 Socket 8 Reboot", "serial": "1234568-reboot" }
+  ]
+}
+```
+
+### Notes on reboot switches
+
+- Reboot switches are intentionally stateless.
+- Turning the switch on sends `control.py <id> <username> reboot`.
+- The switch automatically resets to off shortly after the command.
+
+## Credentials
+
+The Python scripts use:
 
 `/var/lib/homebridge/rpc3control/.credentials`
 
-Both `control.py` and `state.py` call `load_credentials()` and use the returned host/user/password to open the telnet session to the RPC3.
-
-### File syntax
-
-The first line of `.credentials` must be:
+Format:
 
 `<rpc_host>:<username>:<password>:<whitelist_csv>`
 
-- `rpc_host`: RPC3 IP or hostname.
-- `username`: RPC3 username (leave empty if RPC3 login is disabled).
-- `password`: RPC3 password (leave empty if RPC3 login is disabled).
-- `whitelist_csv`: optional comma-separated values (currently parsed but not enforced by `control.py`/`state.py`).
-
-Example (matches the sample file in this repo):
+Example:
 
 `192.168.1.2:admin::192.168.1.2`
 
-In this example:
-- host = `192.168.1.2`
-- user = `admin`
-- password = empty
-- whitelist list = [`192.168.1.2`]
+## Build
 
-If your RPC3 does not require login, you can use empty user/password fields, for example:
-
-`192.168.1.2:::`
-
-### Username/password behavior at runtime
-
-- The scripts always read `host:user:password` from `.credentials` and pass those values into `rpc3Control`.
-- The username/password are only sent if the RPC3 prompt actually asks for them (`Enter username>` / `Enter password>`).
-- If your RPC3 is configured to go straight to `Enter Selection>` (no login required), the script does **not** force-send username/password, and it proceeds normally.
-- That means having a username present in `.credentials` (for example `admin`) is still compatible with no-login RPC3 configs.
-
-## Example homebridge-script2 configuration
-
-```json
-"devices": [
-  {
-    "name": "RPC3 Socket 1",
-    "on": "/var/lib/homebridge/rpc3control/control.py 1 admin on",
-    "off": "/var/lib/homebridge/rpc3control/control.py 1 admin off",
-    "state": "/var/lib/homebridge/rpc3control/state.py 1 admin",
-    "on_value": "true",
-    "polling": true,
-    "polling_interval": 3600000,
-    "polling_on_start": true,
-    "state_cache_ttl_ms": 1500,
-    "reset_state_cache_on_set": true,
-    "unique_serial": "1234561"
-  }
-]
+```bash
+npm install
+npm run build
 ```
 
-(Repeat the same pattern for outlets 2-8 by changing the outlet number and serial.)
+## Development details
 
-## Notes
-
-- `control.py` and `state.py` were written for Baytech RPC3 outlet control through HomeKit.
-- The RPC3 limits telnet sessions (typically 4), so status caching is used to reduce telnet load.
-- The first state request populates/refreshes the cache file.
-- If your RPC3 does not require username/password, the current scripts should work as-is.
-
-More info on Baytech RPC3:
-- http://www.copyerror.com/2014/04/25/baytech-rpc3-remote-power-controller/
-- https://www.servethehome.com/baytech-rpc3-deal-remote-switched-8port-pdu-50-windows-app/
+The plugin currently calls the Python scripts via `child_process.execFile`.
+That means your existing tested RPC3 behavior remains in place while giving you a native Homebridge platform/accessory model.
