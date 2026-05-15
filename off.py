@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import re
@@ -16,6 +16,7 @@ RPC=None
 RPCUSER= None
 RPCPASS=None
 OUTLET= int(sys.argv[1])
+COMMAND= str(sys.argv[3])
 
 def file_exists(path, filename):
         for file_or_folder in os.listdir(path):
@@ -23,17 +24,17 @@ def file_exists(path, filename):
                         return True
         return False
 
-(RPC, RPCUSER, RPCPASS, WHITELIST) = load_credentials("/var/homebridge/rpc3control/.credentials")
+(RPC, RPCUSER, RPCPASS, WHITELIST) = load_credentials("/var/lib/homebridge/rpc3control/.credentials")
 
 RPCUSER= None
 #RPCUSER= str(sys.argv[2])
 
 #telnet into unit and turn off outlet
 r = rpc3Control(RPC, RPCUSER)
-r.outlet(OUTLET, 'off')
+r.outlet(OUTLET, COMMAND)
 
 lock_filename = 'telnetrunning.txt'
-fileexists = file_exists("/var/homebridge/rpc3control/", lock_filename)
+fileexists = file_exists("/var/lib/homebridge/rpc3control/", lock_filename)
 
 #if status file exists, read it and update timestamp and outlet status for the turned off outlet. Also mark the file with updated status flag.
 if (fileexists):
