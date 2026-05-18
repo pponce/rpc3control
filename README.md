@@ -5,7 +5,7 @@
 This project is used with Homebridge and the homebridge-script2 plugin.
 https://github.com/pponce/homebridge-script2
 
-homebridge-script2 allows scripts to turn devices on/off and report state to HomeKit/Siri.
+homebridge-script2 allows scripts to turn devices on/off/reboot via the home app and report state to HomeKit/Siri.
 
 ## Requirements
 
