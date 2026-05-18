@@ -64,24 +64,88 @@ If your RPC3 does not require login, you can use empty user/password fields, for
 ## Example homebridge-script2 configuration
 
 ```json
-"devices": [
-  {
-    "name": "RPC3 Socket 1",
-    "on": "/var/lib/homebridge/rpc3control/control.py 1 admin on",
-    "off": "/var/lib/homebridge/rpc3control/control.py 1 admin off",
-    "state": "/var/lib/homebridge/rpc3control/state.py 1 admin",
-    "on_value": "true",
-    "polling": true,
-    "polling_interval": 3600000,
-    "polling_on_start": true,
-    "state_cache_ttl_ms": 1500,
-    "reset_state_cache_on_set": true,
-    "unique_serial": "1234561"
-  }
-]
+            "on_off_switches": [
+                {
+                    "name": "RPC3 Socket 2",
+                    "unique_serial": "1234562",
+                    "on": "/var/lib/homebridge/rpc3control/control.py 2 admin on",
+                    "off": "/var/lib/homebridge/rpc3control/control.py 2 admin off",
+                    "state": "/var/lib/homebridge/rpc3control/state.py 2 admin",
+                    "on_value": "true",
+                    "polling": true,
+                    "polling_interval": 3600000,
+                    "polling_on_start": true,
+                    "state_cache_ttl_ms": 1500,
+                    "reset_state_cache_on_set": true,
+                    "fail_on_state_exit_code": false
+                },
+                {
+                    "name": "RPC3 Socket 3",
+                    "unique_serial": "1234563",
+                    "on": "/var/lib/homebridge/rpc3control/control.py 3 admin on",
+                    "off": "/var/lib/homebridge/rpc3control/control.py 3 admin off",
+                    "state": "/var/lib/homebridge/rpc3control/state.py 3 admin",
+                    "on_value": "true",
+                    "polling": true,
+                    "polling_interval": 3600000,
+                    "polling_on_start": true,
+                    "state_cache_ttl_ms": 1500,
+                    "reset_state_cache_on_set": true,
+                    "fail_on_state_exit_code": false
+                },
+                {
+                    "name": "RPC3 Socket 8",
+                    "unique_serial": "1234568",
+                    "on": "/var/lib/homebridge/rpc3control/control.py 8 admin on",
+                    "off": "/var/lib/homebridge/rpc3control/control.py 8 admin off",
+                    "state": "/var/lib/homebridge/rpc3control/state.py 8 admin",
+                    "on_value": "true",
+                    "polling": true,
+                    "polling_interval": 3600000,
+                    "polling_on_start": true,
+                    "state_cache_ttl_ms": 1500,
+                    "reset_state_cache_on_set": true,
+                    "fail_on_state_exit_code": false
+                }
+            ],
+            "stateless_switches": [
+                {
+                    "name": "Sonic Modem Reboot",
+                    "unique_serial": "1111111",
+                    "trigger": "/var/lib/homebridge/rpc3control/control.py 1 admin reboot",
+                    "auto_reset_ms": 3000,
+                    "stateless_trigger_on": "off"
+                },
+                {
+                    "name": "UDM PM Reboot",
+                    "unique_serial": "4444444",
+                    "trigger": "/var/lib/homebridge/rpc3control/control.py 4 admin reboot",
+                    "auto_reset_ms": 3000,
+                    "stateless_trigger_on": "off"
+                },
+                {
+                    "name": "LinuxMint Reboot",
+                    "unique_serial": "5555555",
+                    "trigger": "/var/lib/homebridge/rpc3control/control.py 5 admin reboot",
+                    "auto_reset_ms": 3000,
+                    "stateless_trigger_on": "off"
+                },
+                {
+                    "name": "Switch10 Reboot",
+                    "unique_serial": "6666666",
+                    "trigger": "/var/lib/homebridge/rpc3control/control.py 6 admin reboot",
+                    "auto_reset_ms": 3000,
+                    "stateless_trigger_on": "off"
+                },
+                {
+                    "name": "Switch24 Reboot",
+                    "unique_serial": "7777777",
+                    "trigger": "/var/lib/homebridge/rpc3control/control.py 7 admin reboot",
+                    "auto_reset_ms": 3000,
+                    "stateless_trigger_on": "off"
+                }
+            ]
 ```
-
-(Repeat the same pattern for outlets 2-8 by changing the outlet number and serial.)
 
 ## Notes
 
