@@ -1,6 +1,6 @@
-![Alt text](https://raw.githubusercontent.com/pponce/rpc3control/master/assets/BayTech-PDU-Shot.jpg)
+
 ![BayTech PDU Shot](assets/BayTech-PDU-Shot.jpg)
-<img src="assets/BayTech-PDU-Shot.jpg" alt="BayTech PDU Shot" width="600">
+
 
 This project is used with Homebridge and the homebridge-script2 plugin.
 https://github.com/pponce/homebridge-script2
