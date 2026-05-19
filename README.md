@@ -149,7 +149,8 @@ If your RPC3 does not require login, you can use empty user/password fields, for
 
 ## Notes
 
-- `control.py` and `state.py` were written for Baytech RPC3 outlet control through HomeKit.
+- `control.py` and `state.py` were written for Baytech RPC3 outlet control and for status check. 
+They work great with Homebridge-script2.
 - The RPC3 limits telnet sessions (typically 4), so status caching is used to reduce telnet load.
 - The first state request populates/refreshes the cache file.
 - If your RPC3 does not require username/password, the current scripts should work as-is.
