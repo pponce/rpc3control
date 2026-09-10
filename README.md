@@ -1,11 +1,11 @@
 
 ![BayTech PDU Shot](assets/BayTech-PDU-Shot.jpg)
 
+New easy to implement homebridge plugin available here https://github.com/pponce/homebridge-rpc3control/tree/main 
 
 This project can be used with Homebridge and the homebridge-script2 plugin.
 https://github.com/pponce/homebridge-script2
 
-New easy to implement homebridge plugin available here https://github.com/pponce/homebridge-rpc3control/tree/main 
 
 homebridge-script2 allows scripts to turn outlets on/off or reboot on the RPC3Control PDU via the home app and also report state to HomeKit/Siri.
 
